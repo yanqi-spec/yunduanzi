@@ -2,680 +2,624 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>五子棋 · 腾讯云联机版</title>
-    <script src="https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>小七云段子 · 每日一笑</title>
     <style>
-        * { user-select: none; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-        body { background: linear-gradient(145deg, #1a4d2a 0%, #0e2a1a 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 12px; }
-        .game-container { background: #d4af6a; border-radius: 48px; box-shadow: 0 20px 35px rgba(0,0,0,0.5); padding: 15px 18px 22px; width: 100%; max-width: 600px; }
-        .board-wrapper { background: #e9c891; border-radius: 20px; padding: 10px; }
-        canvas { display: block; margin: 0 auto; cursor: pointer; background-color: #f7efcf; border-radius: 12px; width: 100%; height: auto; aspect-ratio: 1 / 1; }
-        .info-panel { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-top: 18px; gap: 12px; background: #2e241ecc; backdrop-filter: blur(4px); border-radius: 60px; padding: 8px 16px; }
-        .turn-indicator { background: #1f1912; border-radius: 40px; padding: 6px 14px; display: flex; align-items: center; gap: 8px; }
-        .piece-sample { width: 28px; height: 28px; border-radius: 50%; }
-        .piece-black { background: radial-gradient(circle at 35% 35%, #555, #1e1e1e); }
-        .piece-white { background: radial-gradient(circle at 35% 35%, #f9f9fc, #e1e5ec); }
-        .turn-text { font-size: 1rem; font-weight: bold; color: #f7e9b0; }
-        .reset-btn { background: #ffcd7e; border: none; font-size: 0.9rem; font-weight: bold; padding: 6px 18px; border-radius: 40px; cursor: pointer; color: #2c1c0c; box-shadow: 0 3px 0 #a05e1a; }
-        .reset-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #a05e1a; }
-        .winner-message { font-size: 0.8rem; background: #000000aa; padding: 5px 12px; border-radius: 40px; color: #ffeaac; }
-        .fun-bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 16px; }
-        .fun-btn { background: #3a2a1c; border: none; color: #ffecb3; font-size: 0.75rem; padding: 6px 12px; border-radius: 40px; cursor: pointer; }
-        .room-info { background: #1f1912aa; border-radius: 20px; padding: 8px 12px; margin-top: 10px; font-size: 0.75rem; color: #ffecb3; text-align: center; word-break: break-all; }
-        .sync-status { font-size: 0.65rem; color: #aaffaa; margin-top: 5px; text-align: center; }
-        .selection-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.9);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #0b1120 0%, #19223c 100%);
+            font-family: 'Segoe UI', 'Poppins', system-ui, 'SF Pro Text', 'Noto Sans CJK SC', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            position: relative;
+        }
+
+        /* 装饰性动态光晕 */
+        body::before {
+            content: "";
+            position: absolute;
+            width: 180%;
+            height: 180%;
+            top: -40%;
+            left: -40%;
+            background: radial-gradient(circle at 30% 20%, rgba(255, 215, 150, 0.08), transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 主卡片 */
+        .card {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            width: 100%;
+            background: rgba(22, 32, 55, 0.68);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 64px 48px 80px 48px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.2s ease;
+            padding: 32px 28px 48px;
+        }
+
+        .card:hover {
+            transform: scale(1.01);
+            box-shadow: 0 30px 55px -15px rgba(0, 0, 0, 0.5);
+        }
+
+        /* logo 区域 */
+        .logo-area {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+
+        .logo-icon {
+            font-size: 2.6rem;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+        }
+
+        .logo-name {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f9e0a0, #ffcd7e, #ffb347);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-sub {
+            font-size: 0.9rem;
+            color: #b9cdff;
+            background: rgba(255, 244, 198, 0.2);
+            padding: 4px 12px;
+            border-radius: 60px;
+            margin-left: 8px;
+            font-weight: 400;
+            backdrop-filter: blur(4px);
+        }
+
+        /* 中间文字容器 — 段子秀场 */
+        .joke-container {
+            background: rgba(10, 18, 30, 0.6);
             backdrop-filter: blur(8px);
+            border-radius: 48px;
+            padding: 40px 28px;
+            margin: 20px 0 40px;
+            border: 1px solid rgba(255, 240, 190, 0.25);
+            min-height: 260px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            box-shadow: inset 0 2px 3px rgba(0,0,0,0.2), 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        .joke-text {
+            font-size: 1.7rem;
+            line-height: 1.45;
+            font-weight: 500;
+            color: #fef7e6;
+            text-align: center;
+            word-break: break-word;
+            white-space: pre-wrap;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            transition: opacity 0.2s ease;
+        }
+
+        /* 按钮组 */
+        .button-group {
             display: flex;
             justify-content: center;
+            gap: 28px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .btn {
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 12px 32px;
+            border-radius: 66px;
+            border: none;
+            cursor: pointer;
+            background: rgba(20, 30, 48, 0.85);
+            backdrop-filter: blur(8px);
+            color: #ffeaCf;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            letter-spacing: 1px;
+            display: inline-flex;
             align-items: center;
-            z-index: 1000;
+            gap: 8px;
+            font-family: inherit;
+            border: 1px solid rgba(255, 215, 150, 0.5);
         }
-        .selection-card {
-            background: linear-gradient(145deg, #d4af6a, #c49a4a);
-            border-radius: 60px;
-            padding: 30px 25px;
-            text-align: center;
-            width: 300px;
-            animation: fadeIn 0.3s ease;
+
+        .btn-primary {
+            background: linear-gradient(115deg, #ff8c42, #ffb347);
+            color: #1f1b13;
+            border: none;
+            box-shadow: 0 8px 20px rgba(255, 140, 66, 0.3);
+            font-weight: 700;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            background: linear-gradient(115deg, #ff9e5e, #ffc46b);
+            box-shadow: 0 14px 24px rgba(255, 140, 66, 0.4);
+            color: #0f0c08;
         }
-        .selection-title { font-size: 1.8rem; font-weight: bold; color: #2c1c0c; margin-bottom: 10px; }
-        .selection-sub { font-size: 0.8rem; color: #3a2a1a; margin-bottom: 25px; }
-        .selection-buttons { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; }
-        .sel-btn { width: 110px; padding: 15px 0; border: none; border-radius: 50px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .sel-btn-black { background: linear-gradient(145deg, #333, #111); color: white; box-shadow: 0 5px 0 #000; }
-        .sel-btn-black:active { transform: translateY(2px); box-shadow: 0 2px 0 #000; }
-        .sel-btn-white { background: linear-gradient(145deg, #f0f0f0, #ddd); color: #333; box-shadow: 0 5px 0 #aaa; }
-        .sel-btn-white:active { transform: translateY(2px); box-shadow: 0 2px 0 #aaa; }
-        .input-area { margin-top: 20px; padding-top: 20px; border-top: 1px solid #a0804a; display: none; }
-        .room-input { width: 100%; padding: 12px; border-radius: 40px; border: none; font-size: 0.9rem; text-align: center; background: #f7efcf; margin-bottom: 10px; letter-spacing: 2px; font-weight: bold; }
-        .confirm-btn { background: #2c1c0c; color: #ffecb3; border: none; padding: 10px 20px; border-radius: 40px; font-weight: bold; cursor: pointer; width: 100%; }
-        .back-btn { background: none; border: none; color: #2c1c0c; font-size: 0.8rem; margin-top: 10px; cursor: pointer; text-decoration: underline; }
-        .ready-btn { background: #4caf50; border: none; color: white; padding: 8px 20px; border-radius: 40px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
-        .toast {
+
+        .btn-secondary {
+            background: rgba(30, 45, 75, 0.8);
+            border: 1px solid rgba(255, 205, 110, 0.6);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(55, 80, 120, 0.9);
+            transform: translateY(-2px);
+            color: #fff0cf;
+            border-color: #ffcf7a;
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+        }
+
+        /* 复制成功浮窗提示 */
+        .toast-msg {
             position: fixed;
             bottom: 30px;
             left: 50%;
-            transform: translateX(-50%);
-            background: #2c1c0c;
-            color: #ffecb3;
-            padding: 12px 24px;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            z-index: 1001;
-            animation: slideUp 0.3s ease;
-            white-space: nowrap;
+            transform: translateX(-50%) scale(0.9);
+            background: #10b981e6;
+            backdrop-filter: blur(20px);
+            color: white;
+            padding: 12px 26px;
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: 500;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            font-family: monospace;
+            letter-spacing: 1px;
         }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateX(-50%) translateY(30px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        .toast-msg.show {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
         }
-        .loading-spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #fff;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
+
+        /* loading 占位符小动画 */
+        .loading-dots:after {
+            content: ' ● ● ●';
+            animation: blink 1.4s infinite;
+            font-size: 1.2rem;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+
+        @keyframes blink {
+            0% { opacity: 0.2; }
+            50% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+
+        /* 响应式 */
+        @media (max-width: 550px) {
+            .card {
+                padding: 24px 18px 38px;
+                border-radius: 48px 36px 56px 36px;
+            }
+            .joke-text {
+                font-size: 1.3rem;
+            }
+            .joke-container {
+                padding: 28px 18px;
+                min-height: 200px;
+            }
+            .btn {
+                padding: 10px 24px;
+                font-size: 1rem;
+            }
+            .logo-name {
+                font-size: 1.8rem;
+            }
+            .logo-icon {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .button-group {
+                gap: 16px;
+            }
+            .btn {
+                padding: 8px 20px;
+            }
+        }
+
+        /* 优雅滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2a3e;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ffb34780;
+            border-radius: 10px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 32px;
+            font-size: 0.7rem;
+            color: #8fa3cf;
+            opacity: 0.6;
         }
     </style>
 </head>
 <body>
-<div>
-    <div class="game-container">
-        <div class="board-wrapper">
-            <canvas id="gobangCanvas" width="580" height="580"></canvas>
-        </div>
-        <div class="info-panel">
-            <div class="turn-indicator" id="turnIndicator">
-                <div class="piece-sample piece-black" id="turnPieceIcon"></div>
-                <div class="turn-text" id="turnText">未连接</div>
-            </div>
-            <button class="reset-btn" id="resetBtn">🔄 新一局</button>
-            <div class="winner-message" id="winnerMsg"></div>
-        </div>
-        
-        <div class="fun-bar">
-            <button class="fun-btn" id="shakeBtn">🌀 震屏</button>
-            <button class="fun-btn" id="rainbowBtn">🌈 彩虹</button>
-            <button class="fun-btn" id="ghostBtn">👻 幽灵</button>
-            <button class="fun-btn" id="bigHeadBtn">🐼 大头</button>
-            <button class="fun-btn" id="reverseBtn">🔄 镜像</button>
-            <button class="fun-btn" id="confettiBtn">🎉 烟花</button>
-            <button class="fun-btn" id="darkBtn">🌙 暗夜</button>
-            <button class="fun-btn" id="echoBtn">🗣️ 语音</button>
-        </div>
-        
-        <div class="room-info" id="roomInfo">⚡ 点击下方按钮开始</div>
-        <div class="sync-status" id="syncStatus">🟢 就绪</div>
+
+<div class="card">
+    <!-- Logo: 小七云段子 -->
+    <div class="logo-area">
+        <span class="logo-icon">☁️🎤</span>
+        <span class="logo-name">小七云段子</span>
+        <span class="logo-sub">· 乐享每刻 ·</span>
     </div>
+
+    <!-- 中间文字区域 -->
+    <div class="joke-container" id="jokeContainer">
+        <div class="joke-text" id="jokeText">
+            正在云端加载段子库...
+        </div>
+    </div>
+
+    <!-- 按钮组 -->
+    <div class="button-group">
+        <button class="btn btn-primary" id="copyBtn">📋 复制一下</button>
+        <button class="btn btn-secondary" id="refreshBtn">🔄 换一句</button>
+    </div>
+    <footer>✨ 段子皆取自 ydz.txt · 空行分隔段落 · 随机笑谈 ✨</footer>
 </div>
 
+<div id="toastMsg" class="toast-msg">✅ 已复制到剪贴板</div>
+
 <script>
-    (function(){
-        // ========== 腾讯云配置 ==========
-        const ENV_ID = 'gobang-d1gc3o7l120b7059a';
-        const PUBLISHABLE_KEY = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjlkMWRjMzFlLWI0ZDAtNDQ4Yi1hNzZmLWIwY2M2M2Q4MTQ5OCJ9.eyJpc3MiOiJodHRwczovL2dvYmFuZy1kMWdjM283bDEyMGI3MDU5YS5hcC1zaGFuZ2hhaS50Y2ItYXBpLnRlbmNlbnRjbG91ZGFwaS5jb20iLCJzdWIiOiJhbm9uIiwiYXVkIjoiZ29iYW5nLWQxZ2MzbzdsMTIwYjcwNTlhIiwiZXhwIjo0MDgxNjUyODI3LCJpYXQiOjE3Nzc5Njk2MjcsIm5vbmNlIjoiOHZ2d0M2WUNRUkdfVGlIWjdxc3FkZyIsImF0X2hhc2giOiI4dnZ3QzZZQ1FSR19UaUhaN3FzcWRnIiwibmFtZSI6IkFub255bW91cyIsInNjb3BlIjoiYW5vbnltb3VzIiwicHJvamVjdF9pZCI6ImdvYmFuZy1kMWdjM283bDEyMGI3MDU5YSIsIm1ldGEiOnsicGxhdGZvcm0iOiJQdWJsaXNoYWJsZUtleSJ9LCJ1c2VyX3R5cGUiOiIiLCJjbGllbnRfdHlwZSI6ImNsaWVudF91c2VyIiwiaXNfc3lzdGVtX2FkbWluIjpmYWxzZX0.UIoKyOJe7a1jd37iIkEQwgdhuCxEcFmUUKZRtwuKG9r5T9ePBbpnLIOi7y69bJityjZfRnBv_XNdx5KDZwBqDWbg_5UFCZA2D9HJ_8qz9dLh0L7ZdlusYf3RQiXzwuDU8vkwT0FwSswY_4-OAIkVy7NVhwM0dx9ZqT88Sftz4I0d5zWkoQ4g8MzA4QXjlDdFX-mhuONRQrF7BHQhzkHhsje6QB1vI4_tp4YTUTJCt9DZk-LApJ0nEPJrZSsrBI159MoX72MwFNKr3XsVxBi144JD212A75CS_bEN59sicGwSo7kSr_5Cga_0mJhLdKO9sX2DfYVhJCDdus0UDgc4hw';
+    (function() {
+        // ---------- 配置 ----------
+        const TXT_PATH = './ydz.txt';
         
-        const boardSize = 15;
-        let board = Array(boardSize).fill().map(() => Array(boardSize).fill(0));
-        let currentPlayer = 1;
-        let myColor = null;
-        let gameOver = false;
-        let roomId = null;
-        let watchHandle = null;
-        let app = null;
-        let db = null;
+        // DOM 元素
+        const jokeTextEl = document.getElementById('jokeText');
+        const copyBtn = document.getElementById('copyBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const toastEl = document.getElementById('toastMsg');
         
-        let rainbowMode = false, ghostMode = false, bigHeadMode = false, reverseMode = false, darkMode = false;
-        let shakeEnabled = false, voiceEnabled = false;
+        // 状态管理
+        let jokesList = [];          // 存储所有段子（每一段是由空行分隔的文本块）
+        let isLoading = true;
+        let currentJoke = '✨ 暂无段子，请稍后或检查文件 ✨';
         
-        const canvas = document.getElementById('gobangCanvas');
-        const ctx = canvas.getContext('2d');
-        const turnTextEl = document.getElementById('turnText');
-        const turnPieceIcon = document.getElementById('turnPieceIcon');
-        const winnerMsgEl = document.getElementById('winnerMsg');
-        const resetBtn = document.getElementById('resetBtn');
-        const roomInfoEl = document.getElementById('roomInfo');
-        const syncStatusEl = document.getElementById('syncStatus');
-        
-        let cellSize = 0, offsetX = 0, offsetY = 0, radius = 0;
-        
-        function showToast(msg) {
-            const existing = document.querySelector('.toast');
-            if (existing) existing.remove();
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.innerText = msg;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2000);
-        }
-        
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showToast(`✅ 房间号已复制：${text}`);
-            });
-        }
-        
-        function updateSyncStatus(status, isError = false) {
-            syncStatusEl.innerHTML = status;
-            syncStatusEl.style.color = isError ? '#ff8888' : '#aaffaa';
-        }
-        
-        function generateRoomCode() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let code = '';
-            for (let i = 0; i < 6; i++) {
-                code += chars[Math.floor(Math.random() * chars.length)];
-            }
-            return code;
-        }
-        
-        // 初始化腾讯云
-        async function initCloud() {
-            app = cloudbase.init({
-                env: ENV_ID,
-                region: 'ap-shanghai',
-                auth: { persistKey: 'gobang_auth' }
-            });
-            
-            const auth = app.auth({ persistence: 'local' });
-            await auth.signInAnonymously();
-            db = app.database();
-            updateSyncStatus("🟢 云服务已连接");
-            return true;
-        }
-        
-        // 创建房间
-        async function createRoom() {
-            const roomCode = generateRoomCode();
-            
-            const emptyBoard = Array(boardSize).fill().map(() => Array(boardSize).fill(0));
-            const gameData = {
-                _id: roomCode,
-                board_data: emptyBoard,
-                current_player: 1,
-                winner: null,
-                black_joined: true,
-                white_joined: false,
-                game_started: false,
-                created_at: Date.now()
-            };
-            
-            try {
-                await db.collection('games').add(gameData);
-                return roomCode;
-            } catch (e) {
-                console.error(e);
-                return null;
-            }
-        }
-        
-        // 加入房间
-        async function joinRoom(roomCode) {
-            const result = await db.collection('games').where({
-                _id: roomCode.toUpperCase()
-            }).get();
-            
-            if (result.data && result.data.length > 0) {
-                return result.data[0];
-            }
-            return null;
-        }
-        
-        // 更新游戏数据
-        async function updateGameData(roomCode, data) {
-            await db.collection('games').doc(roomCode).update(data);
-        }
-        
-        // 监听房间变化（实时同步）
-        function watchRoom(roomCode) {
-            if (watchHandle) watchHandle.close();
-            
-            watchHandle = db.collection('games').doc(roomCode).watch({
-                onChange: (snapshot) => {
-                    const newData = snapshot.docs[0];
-                    if (!newData) return;
-                    
-                    const remoteBoard = newData.board_data;
-                    const localBoardStr = JSON.stringify(board);
-                    const remoteBoardStr = JSON.stringify(remoteBoard);
-                    
-                    if (remoteBoardStr !== localBoardStr) {
-                        board = remoteBoard;
-                        currentPlayer = newData.current_player;
-                        gameOver = (newData.winner !== null);
-                        
-                        if (gameOver && newData.winner) {
-                            winnerMsgEl.innerText = `${newData.winner === 'black' ? '黑棋' : '白棋'} 胜利！🎉`;
-                            if (voiceEnabled) speak(newData.winner === 'black' ? '黑方胜利' : '白方胜利');
-                            if (typeof canvasConfetti === 'function') canvasConfetti({ particleCount: 150, spread: 70 });
-                        } else if (!gameOver) {
-                            winnerMsgEl.innerText = '';
-                        }
-                        
-                        updateTurnDisplay();
-                        drawBoard();
-                        updateSyncStatus(`🟢 已同步`);
-                        if (shakeEnabled && navigator.vibrate) navigator.vibrate(30);
-                    }
-                    
-                    if (!newData.game_started && newData.black_joined && newData.white_joined) {
-                        updateGameData(roomCode, { game_started: true });
-                        showToast("🎉 双方已准备！游戏开始！");
-                        updateSyncStatus("🟢 游戏进行中");
-                    }
-                },
-                onError: (err) => {
-                    console.error("监听错误:", err);
-                }
-            });
-        }
-        
-        // ========== 游戏逻辑 ==========
-        function checkWin(row, col, playerVal) {
-            const dirs = [[1,0],[0,1],[1,1],[1,-1]];
-            for(let [dx, dy] of dirs) {
-                let count = 1;
-                for(let step=1; step<=4; step++) {
-                    const nr = row+dx*step, nc = col+dy*step;
-                    if(nr<0 || nr>=boardSize || nc<0 || nc>=boardSize) break;
-                    if(board[nr]?.[nc] === playerVal) count++;
-                    else break;
-                }
-                for(let step=1; step<=4; step++) {
-                    const nr = row-dx*step, nc = col-dy*step;
-                    if(nr<0 || nr>=boardSize || nc<0 || nc>=boardSize) break;
-                    if(board[nr]?.[nc] === playerVal) count++;
-                    else break;
-                }
-                if(count >= 5) return true;
-            }
-            return false;
-        }
-        
-        async function placePiece(row, col) {
-            if (gameOver) { showToast("游戏已结束"); return; }
-            if (!myColor) { showToast("请先加入房间"); return; }
-            if (board[row]?.[col] !== 0) { showToast("已有棋子"); return; }
-            if (currentPlayer !== myColor) { showToast("等待对手落子"); return; }
-            
-            const newBoard = JSON.parse(JSON.stringify(board));
-            newBoard[row][col] = myColor;
-            
-            const win = checkWin(row, col, myColor);
-            let winnerVal = null;
-            let newCurrentPlayer = currentPlayer;
-            
-            if (win) {
-                winnerVal = myColor === 1 ? 'black' : 'white';
-                gameOver = true;
+        // ---------- 辅助函数 ----------
+        function showToast(message, isError = false) {
+            if (!toastEl) return;
+            toastEl.textContent = message || (isError ? '❌ 操作失败' : '✅ 已复制到剪贴板');
+            if (isError) {
+                toastEl.style.background = '#e53e3ee6';
             } else {
-                newCurrentPlayer = currentPlayer === 1 ? 2 : 1;
+                toastEl.style.background = '#10b981e6';
             }
-            
-            await updateGameData(roomId, {
-                board_data: newBoard,
-                current_player: newCurrentPlayer,
-                winner: winnerVal
-            });
-            
-            board = newBoard;
-            currentPlayer = newCurrentPlayer;
-            
-            if (gameOver && winnerVal) {
-                winnerMsgEl.innerText = `${winnerVal === 'black' ? '黑棋' : '白棋'} 胜利！🎉`;
-                if (voiceEnabled) speak(winnerVal === 'black' ? '黑方胜利' : '白方胜利');
-                if (typeof canvasConfetti === 'function') canvasConfetti({ particleCount: 150, spread: 70 });
-            }
-            
-            updateTurnDisplay();
-            drawBoard();
-            if (shakeEnabled && navigator.vibrate) navigator.vibrate(20);
+            toastEl.classList.add('show');
+            setTimeout(() => {
+                toastEl.classList.remove('show');
+                if (!isError) toastEl.style.background = '#10b981e6';
+            }, 2000);
         }
         
-        async function setReady() {
-            if (myColor === 1) {
-                await updateGameData(roomId, { black_joined: true });
-            } else {
-                await updateGameData(roomId, { white_joined: true });
-            }
-            showToast("✅ 已准备，等待对方...");
-            updateSyncStatus("🟡 已准备，等待对方...");
-        }
-        
-        async function resetGame() {
-            const emptyBoard = Array(boardSize).fill().map(() => Array(boardSize).fill(0));
-            await updateGameData(roomId, {
-                board_data: emptyBoard,
-                current_player: 1,
-                winner: null,
-                black_joined: false,
-                white_joined: false,
-                game_started: false
-            });
-            
-            board = emptyBoard;
-            currentPlayer = 1;
-            gameOver = false;
-            winnerMsgEl.innerText = '';
-            updateTurnDisplay();
-            drawBoard();
-            showToast("棋盘已重置");
-            updateSyncStatus("🟡 游戏已重置，点击准备");
-            
-            setTimeout(() => setReady(), 500);
-        }
-        
-        // 绘制
-        function drawBoard() {
-            const w = canvas.width, h = canvas.height;
-            const padding = 28;
-            cellSize = (w - padding * 2) / (boardSize - 1);
-            offsetX = padding;
-            offsetY = padding;
-            radius = Math.min(cellSize * 0.42, 16);
-            
-            ctx.fillStyle = darkMode ? '#1a2a1f' : '#f7efcf';
-            ctx.fillRect(0, 0, w, h);
-            
-            ctx.strokeStyle = darkMode ? '#bbaa88' : '#4b3a2b';
-            ctx.lineWidth = 1.8;
-            for(let i = 0; i < boardSize; i++) {
-                ctx.beginPath();
-                ctx.moveTo(offsetX, offsetY + i * cellSize);
-                ctx.lineTo(offsetX + (boardSize-1) * cellSize, offsetY + i * cellSize);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(offsetX + i * cellSize, offsetY);
-                ctx.lineTo(offsetX + i * cellSize, offsetY + (boardSize-1) * cellSize);
-                ctx.stroke();
-            }
-            
-            const starPoints = [[3,3],[11,3],[7,7],[3,11],[11,11]];
-            for(let [x,y] of starPoints) {
-                const cx = offsetX + x * cellSize;
-                const cy = offsetY + y * cellSize;
-                ctx.beginPath();
-                ctx.arc(cx, cy, cellSize*0.1, 0, 2*Math.PI);
-                ctx.fillStyle = darkMode ? '#e9c891' : '#b45f2b';
-                ctx.fill();
-            }
-            
-            for(let i = 0; i < boardSize; i++) {
-                for(let j = 0; j < boardSize; j++) {
-                    const val = board[i]?.[j];
-                    if(!val || val === 0) continue;
-                    
-                    let x = offsetX + j * cellSize;
-                    let y = offsetY + i * cellSize;
-                    if (reverseMode) {
-                        x = offsetX + (boardSize-1 - j) * cellSize;
-                        y = offsetY + (boardSize-1 - i) * cellSize;
-                    }
-                    
-                    let grad;
-                    if (rainbowMode) {
-                        const hue = (Date.now() * 0.005) % 360;
-                        grad = ctx.createRadialGradient(x-3, y-3, 3, x, y, radius);
-                        grad.addColorStop(0, `hsl(${hue}, 100%, 65%)`);
-                        grad.addColorStop(1, `hsl(${hue+40}, 80%, 45%)`);
-                        ctx.fillStyle = grad;
-                    } else if (val === 1) {
-                        grad = ctx.createRadialGradient(x-3, y-3, 3, x, y, radius);
-                        grad.addColorStop(0, '#3a3a3a');
-                        grad.addColorStop(1, '#111');
-                        ctx.fillStyle = grad;
-                    } else {
-                        grad = ctx.createRadialGradient(x-3, y-3, 3, x, y, radius);
-                        grad.addColorStop(0, '#fefefe');
-                        grad.addColorStop(1, '#cbd5e1');
-                        ctx.fillStyle = grad;
-                    }
-                    
-                    ctx.globalAlpha = ghostMode ? 0.65 : 1;
-                    ctx.beginPath();
-                    ctx.arc(x, y, radius, 0, Math.PI*2);
-                    ctx.fill();
-                    
-                    if (bigHeadMode) {
-                        ctx.beginPath();
-                        ctx.arc(x-2, y-2, radius*0.4, 0, 2*Math.PI);
-                        ctx.fillStyle = 'white';
-                        ctx.fill();
-                    }
-                    ctx.globalAlpha = 1;
-                }
-            }
-        }
-        
-        function updateTurnDisplay() {
-            if (gameOver) return;
-            if (!myColor) {
-                turnTextEl.innerText = "未加入房间";
+        function updateDisplayJoke() {
+            if (!jokeTextEl) return;
+            if (isLoading) {
+                jokeTextEl.innerHTML = '<span class="loading-dots">段子加载中</span>';
                 return;
             }
-            if (currentPlayer === myColor) {
-                turnTextEl.innerText = myColor === 1 ? '⚫ 你的回合 (黑棋)' : '⚪ 你的回合 (白棋)';
-                turnPieceIcon.className = `piece-sample ${myColor === 1 ? 'piece-black' : 'piece-white'}`;
+            if (!jokesList.length) {
+                jokeTextEl.textContent = '📭 暂时没有段子~ 请检查 ydz.txt 文件内容（用空行分隔每个段子）';
+                return;
+            }
+            jokeTextEl.textContent = currentJoke;
+        }
+        
+        function getRandomJokeFromList() {
+            if (!jokesList.length) return null;
+            const randomIndex = Math.floor(Math.random() * jokesList.length);
+            return jokesList[randomIndex];
+        }
+        
+        function refreshJoke() {
+            if (isLoading) {
+                showToast('⏳ 正在加载段子库，请稍后', false);
+                return;
+            }
+            if (!jokesList.length) {
+                showToast('📭 段子库为空，无法换一句', true);
+                currentJoke = '⚠️ 暂无段子，请确认 ydz.txt 存在且使用空行分隔每个段子';
+                updateDisplayJoke();
+                return;
+            }
+            const newJoke = getRandomJokeFromList();
+            if (newJoke) {
+                currentJoke = newJoke;
+                updateDisplayJoke();
             } else {
-                turnTextEl.innerText = '⏳ 等待对手落子...';
+                currentJoke = '😶 段子溜走了，再试一次吧~';
+                updateDisplayJoke();
             }
         }
         
-        function speak(msg) {
-            if (!voiceEnabled) return;
-            const utterance = new SpeechSynthesisUtterance(msg);
-            utterance.lang = 'zh-CN';
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(utterance);
-        }
-        
-        // 坐标转换
-        function getBoardIndexFromPixels(clientX, clientY) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            let canvasX = (clientX - rect.left) * scaleX;
-            let canvasY = (clientY - rect.top) * scaleY;
-            
-            if (canvasX < offsetX - radius || canvasX > offsetX + (boardSize-1)*cellSize + radius) return null;
-            
-            let minDist = cellSize * 0.4;
-            let targetRow = -1, targetCol = -1;
-            for(let i = 0; i < boardSize; i++) {
-                for(let j = 0; j < boardSize; j++) {
-                    const cx = offsetX + j * cellSize;
-                    const cy = offsetY + i * cellSize;
-                    const dist = Math.hypot(canvasX - cx, canvasY - cy);
-                    if(dist < minDist) {
-                        minDist = dist;
-                        targetRow = i;
-                        targetCol = j;
-                    }
-                }
+        async function copyCurrentJoke() {
+            if (isLoading) {
+                showToast('⏳ 段子未加载完成, 稍后再复制', true);
+                return;
             }
-            return targetRow !== -1 ? { row: targetRow, col: targetCol } : null;
-        }
-        
-        function onCanvasClick(e) {
-            if (gameOver) { showToast("游戏已结束"); return; }
-            if (!myColor) { showToast("请先加入房间"); return; }
-            if (currentPlayer !== myColor) { showToast("等待对手落子"); return; }
-            
-            const pos = getBoardIndexFromPixels(e.clientX, e.clientY);
-            if (pos) placePiece(pos.row, pos.col);
-        }
-        
-        // ========== 创建房间流程 ==========
-        async function startCreateRoom() {
-            updateSyncStatus("🟡 创建房间中...");
-            roomInfoEl.innerHTML = '<span class="loading-spinner"></span> 正在创建房间...';
-            
-            const roomCode = await createRoom();
-            
-            if (roomCode) {
-                roomId = roomCode;
-                myColor = 1;
-                board = Array(boardSize).fill().map(() => Array(boardSize).fill(0));
-                currentPlayer = 1;
-                gameOver = false;
-                
-                copyToClipboard(roomCode);
-                
-                roomInfoEl.innerHTML = `
-                    ✅ 房间创建成功！<br>
-                    🔑 房间号: <strong style="font-size:1.2rem">${roomCode}</strong><br>
-                    ⚫ 你是黑棋（先手）<br>
-                    <br>
-                    📤 房间号已复制！<br>
-                    让对方选择「白棋」并输入这个6位码
-                    <button class="ready-btn" id="readyBtn">✅ 准备就绪</button>
-                `;
-                
-                updateTurnDisplay();
-                drawBoard();
-                watchRoom(roomId);
-                updateSyncStatus("🟡 等待白棋加入，点击准备...");
-                
-                document.getElementById('readyBtn')?.addEventListener('click', () => setReady());
-            } else {
-                roomInfoEl.innerHTML = "❌ 创建失败，请刷新重试";
-                updateSyncStatus("❌ 创建失败", true);
-                showToast("创建失败，请刷新页面");
+            if (!jokesList.length) {
+                showToast('📭 没有可复制的段子，请检查数据源', true);
+                return;
             }
-        }
-        
-        // ========== 加入房间流程 ==========
-        async function startJoinRoom(code) {
-            updateSyncStatus("🟡 加入房间中...");
-            roomInfoEl.innerHTML = '<span class="loading-spinner"></span> 正在加入房间...';
-            
-            const gameData = await joinRoom(code);
-            
-            if (gameData) {
-                roomId = code;
-                myColor = 2;
-                board = gameData.board_data;
-                currentPlayer = gameData.current_player;
-                gameOver = (gameData.winner !== null);
-                
-                roomInfoEl.innerHTML = `
-                    ✅ 加入成功！<br>
-                    🔑 房间号: ${code}<br>
-                    ⚪ 你是白棋（后手）<br>
-                    <br>
-                    ${gameData.winner ? '⚠️ 游戏已结束' : '等待黑棋准备...'}
-                    <button class="ready-btn" id="readyBtn">✅ 准备就绪</button>
-                `;
-                
-                if (gameData.winner) {
-                    winnerMsgEl.innerText = `${gameData.winner === 'black' ? '黑棋' : '白棋'} 已获胜`;
-                }
-                
-                updateTurnDisplay();
-                drawBoard();
-                watchRoom(roomId);
-                updateSyncStatus("🟡 点击准备开始游戏");
-                
-                document.getElementById('readyBtn')?.addEventListener('click', () => setReady());
-            } else {
-                roomInfoEl.innerHTML = "❌ 房间不存在，请检查房间号";
-                updateSyncStatus("❌ 加入失败", true);
-                showToast("房间号无效");
-            }
-        }
-        
-        // 选择界面
-        async function showSelectionUI() {
-            await initCloud();
-            
-            const overlay = document.createElement('div');
-            overlay.className = 'selection-overlay';
-            overlay.innerHTML = `
-                <div class="selection-card">
-                    <div class="selection-title">🎲 五子棋</div>
-                    <div class="selection-sub">选择你的角色</div>
-                    <div class="selection-buttons">
-                        <button class="sel-btn sel-btn-black" id="createBtn">⚫ 黑棋<br><span style="font-size:0.7rem">创建房间</span></button>
-                        <button class="sel-btn sel-btn-white" id="joinBtn">⚪ 白棋<br><span style="font-size:0.7rem">加入房间</span></button>
-                    </div>
-                    <div id="joinPanel" style="display:none; margin-top:15px">
-                        <input type="text" id="roomCodeInput" placeholder="输入6位房间号" maxlength="6" style="width:100%; padding:10px; border-radius:40px; border:none; text-align:center; font-size:1rem; letter-spacing:2px">
-                        <button id="confirmJoinBtn" style="margin-top:10px; background:#2c1c0c; color:white; border:none; padding:10px; border-radius:40px; width:100%; cursor:pointer">确认加入</button>
-                        <button id="backBtn" style="margin-top:8px; background:none; border:none; color:#2c1c0c; cursor:pointer">返回</button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(overlay);
-            
-            document.getElementById('createBtn').onclick = async () => {
-                overlay.remove();
-                await startCreateRoom();
-            };
-            
-            document.getElementById('joinBtn').onclick = () => {
-                document.getElementById('joinPanel').style.display = 'block';
-            };
-            
-            document.getElementById('backBtn').onclick = () => {
-                document.getElementById('joinPanel').style.display = 'none';
-            };
-            
-            document.getElementById('confirmJoinBtn').onclick = async () => {
-                const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-                if (code.length !== 6) {
-                    showToast("请输入6位房间号");
+            let textToCopy = currentJoke;
+            if (!textToCopy || textToCopy.includes('暂无段子') || textToCopy.includes('加载中') || textToCopy.includes('⚠️')) {
+                if (jokesList.length) {
+                    textToCopy = jokesList[0];
+                } else {
+                    showToast('暂无有效段子可复制', true);
                     return;
                 }
-                overlay.remove();
-                await startJoinRoom(code);
-            };
+            }
+            
+            try {
+                await navigator.clipboard.writeText(textToCopy);
+                const preview = textToCopy.length > 30 ? textToCopy.slice(0, 30) + '…' : textToCopy;
+                showToast(`✅ 复制成功: “${preview}”`);
+            } catch (err) {
+                console.warn('复制失败，尝试降级方案', err);
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                const success = document.execCommand('copy');
+                document.body.removeChild(textArea);
+                if (success) {
+                    showToast(`📋 复制成功 (兼容模式)`);
+                } else {
+                    showToast('❌ 复制失败，请手动复制', true);
+                }
+            }
         }
         
-        // ========== 事件绑定 ==========
-        canvas.addEventListener('click', onCanvasClick);
-        canvas.addEventListener('touchstart', (e) => { 
-            e.preventDefault(); 
-            const touch = e.touches[0];
-            if (touch) onCanvasClick(touch);
-        });
+        /**
+         * 核心解析： 将 ydz.txt 文本按“空行分隔”解析为段子数组。
+         * 规则：
+         * 1. 将文本按连续的换行分割成块 (一个或多个空行作为分隔符)
+         * 2. 每个块内部保留原有换行（即多行文本作为一个段子）
+         * 3. 过滤掉全部是空白字符的块
+         * 4. 可选：过滤掉以#开头的注释块（尊重传统，但也可以保留，这里过滤以#开头的整段）
+         */
+        function parseParagraphsByBlankLines(rawText) {
+            // 统一换行符为 \n
+            let normalized = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            // 用正则 按两个及以上连续换行 或者 单个换行但前后均为空白行？ 标准：使用 /\n\s*\n/ 来分割，但更好方式：
+            // 用正则将连续的空行作为分隔符，分段：按照至少一个空行（即两个换行符中间可能存在空白）来分割
+            // 更稳健：先按 \n\n+ 分割，但也要考虑纯空白行（空格、tab等情况）我们采用更通用的正则：
+            // 将连续出现的换行（包含空白行） 作为分割边界，但保留每个段落内部的原样。
+            let paragraphs = [];
+            // 使用正则：以一个或多个空白行（行中只有空白字符或完全空白）作为分隔符。
+            // 步骤：先将整个文本按 \n 拆成行数组，再手动合并段落更好控制，以确保原始缩进。
+            const lines = normalized.split('\n');
+            let currentParaLines = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                // 判断当前行是否为“空白行”（只包含空白字符或者为空）
+                const isEmptyLine = /^\s*$/.test(line);
+                
+                if (isEmptyLine) {
+                    // 遇到空行：如果当前段落有内容，则结束当前段落
+                    if (currentParaLines.length > 0) {
+                        let paraContent = currentParaLines.join('\n').trim();
+                        if (paraContent !== "") {
+                            paragraphs.push(paraContent);
+                        }
+                        currentParaLines = [];
+                    }
+                    // 跳过空行，继续
+                } else {
+                    // 非空行：加入到当前段落中
+                    currentParaLines.push(line);
+                }
+            }
+            // 最后如果还有内容未结束
+            if (currentParaLines.length > 0) {
+                let paraContent = currentParaLines.join('\n').trim();
+                if (paraContent !== "") {
+                    paragraphs.push(paraContent);
+                }
+            }
+            
+            // 附加过滤：如果某个段落整体以 # 开头（可配置忽略注释段子）
+            paragraphs = paragraphs.filter(para => {
+                const trimmed = para.trim();
+                if (trimmed.startsWith('#')) return false;   // 忽略完全以#开头的段落（注释段）
+                return trimmed.length > 0;
+            });
+            
+            return paragraphs;
+        }
         
-        resetBtn.addEventListener('click', () => {
-            if (roomId && myColor) resetGame();
-            else showToast("请先加入房间");
-        });
+        // ---------- 核心：加载 ydz.txt 文件并按“空行分隔”解析段子 ----------
+        async function loadJokesFromTxt() {
+            isLoading = true;
+            updateDisplayJoke();
+            
+            try {
+                const response = await fetch(TXT_PATH, {
+                    cache: 'no-cache',
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: 无法获取 ydz.txt 文件`);
+                }
+                
+                const textContent = await response.text();
+                // 按空行分隔解析段子（中间有空行就算一句）
+                const paragraphs = parseParagraphsByBlankLines(textContent);
+                
+                if (paragraphs.length === 0) {
+                    // 文件存在但没有有效段落，提供示例段子并友好提醒格式
+                    jokesList = [
+                        '🎭 检测到 ydz.txt 没有用空行分隔的段子～\n\n✨ 正确示范：\n第一段内容\n可以有多行文字\n\n（中间有空行）\n第二段内容写在这里',
+                        '📝 小贴士：每个段子之间需要有一个或多个空行隔开。\n\n比如这样写完一段后按两次回车再写下一段。',
+                        '☁️ 小七云段子期待你的精彩内容！\n\n快在 ydz.txt 里写入你的笑话吧。'
+                    ];
+                    console.warn('ydz.txt 中没有通过空行分隔的有效段子，使用提示库');
+                } else {
+                    jokesList = paragraphs;
+                }
+                
+                if (jokesList.length) {
+                    currentJoke = getRandomJokeFromList();
+                } else {
+                    currentJoke = '📄 没有找到任何段子，请确保在 ydz.txt 中用空行分隔每段内容。';
+                }
+                
+                isLoading = false;
+                updateDisplayJoke();
+                console.log(`✨ 小七云段子已加载 ${jokesList.length} 条段子（空行分隔） ✨`);
+            } catch (error) {
+                console.error('读取 ydz.txt 错误:', error);
+                // 后备段子，让页面不崩溃并提示正确格式
+                jokesList = [
+                    '🍭 生活就像一盒巧克力，但你永远不知道下一颗是不是段子。\n\n（提示：ydz.txt 不存在或无法访问）',
+                    '🤣 为什么程序员总是分不清万圣节和圣诞节？\n因为 Oct 31 = Dec 25！\n\n✨ 请创建 ydz.txt 并用空行分隔每个段子。',
+                    '🐱 我有个段子，但是怕你笑到肚子疼～\n\n请在 root 目录创建 ydz.txt，段子之间记得留空行。',
+                    '🌟 小七云段子提醒：在同目录下创建 ydz.txt，多个段子之间用空行（回车空行）分隔。\n\n就像这样一段话结束换两行再写下一段。',
+                    '💡 听说爱笑的人运气都不会太差，换一句试试吧！'
+                ];
+                currentJoke = getRandomJokeFromList();
+                isLoading = false;
+                updateDisplayJoke();
+                const footer = document.querySelector('footer');
+                if (footer) {
+                    footer.style.opacity = '0.9';
+                    footer.style.color = '#ffbb77';
+                    setTimeout(() => {
+                        if (footer) footer.style.opacity = '0.6';
+                    }, 4000);
+                }
+            }
+        }
         
-        document.getElementById('shakeBtn').onclick = () => { shakeEnabled = !shakeEnabled; showToast(shakeEnabled ? "震动开启" : "震动关闭"); };
-        document.getElementById('rainbowBtn').onclick = () => { rainbowMode = !rainbowMode; drawBoard(); };
-        document.getElementById('ghostBtn').onclick = () => { ghostMode = !ghostMode; drawBoard(); };
-        document.getElementById('bigHeadBtn').onclick = () => { bigHeadMode = !bigHeadMode; drawBoard(); };
-        document.getElementById('reverseBtn').onclick = () => { reverseMode = !reverseMode; drawBoard(); };
-        document.getElementById('confettiBtn').onclick = () => { 
-            if (typeof canvasConfetti === 'function') canvasConfetti({ particleCount: 200, spread: 70 });
-            else { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1'; s.onload = () => canvasConfetti({ particleCount: 200 }); document.body.appendChild(s); }
-        };
-        document.getElementById('darkBtn').onclick = () => { darkMode = !darkMode; drawBoard(); };
-        document.getElementById('echoBtn').onclick = () => { voiceEnabled = !voiceEnabled; showToast(voiceEnabled ? "语音开启" : "语音关闭"); };
+        // ---------- 绑定事件 & 交互优化 ----------
+        function bindEvents() {
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    refreshJoke();
+                });
+            }
+            if (copyBtn) {
+                copyBtn.addEventListener('click', () => {
+                    copyCurrentJoke();
+                });
+            }
+            // 键盘快捷键：右键/下键/空格 → 换一句；按 C 键（无修饰键）复制
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                    if (e.key === ' ') {
+                        e.preventDefault();
+                    }
+                    refreshJoke();
+                } else if (e.key === 'c' || e.key === 'C') {
+                    if (!e.ctrlKey && !e.metaKey) {
+                        e.preventDefault();
+                        copyCurrentJoke();
+                    }
+                }
+            });
+        }
         
-        drawBoard();
-        showSelectionUI();
+        // 双击页脚重新加载（方便测试或更新 ydz.txt 后重新拉取）
+        function setupReloadHack() {
+            const footerEl = document.querySelector('footer');
+            if (footerEl) {
+                let clickTimer = null;
+                let doubleClickFlag = false;
+                footerEl.addEventListener('click', (e) => {
+                    if (clickTimer) {
+                        clearTimeout(clickTimer);
+                        clickTimer = null;
+                        doubleClickFlag = true;
+                        showToast('🔄 正在重新加载段子库...', false);
+                        loadJokesFromTxt().catch(err => console.warn('重载失败', err));
+                        setTimeout(() => { doubleClickFlag = false; }, 300);
+                    } else {
+                        clickTimer = setTimeout(() => {
+                            clickTimer = null;
+                        }, 200);
+                    }
+                });
+                footerEl.addEventListener('dblclick', (e) => {
+                    e.preventDefault();
+                });
+                // 移动端长按提示
+                let touchTimer;
+                footerEl.addEventListener('touchstart', (e) => {
+                    touchTimer = setTimeout(() => {
+                        showToast('🔁 双击页脚可强制重新加载 ydz.txt', false);
+                    }, 500);
+                });
+                footerEl.addEventListener('touchend', () => {
+                    clearTimeout(touchTimer);
+                });
+                footerEl.addEventListener('touchcancel', () => {
+                    clearTimeout(touchTimer);
+                });
+            }
+        }
+        
+        function init() {
+            bindEvents();
+            setupReloadHack();
+            loadJokesFromTxt().catch(err => {
+                console.warn('最终加载保护:', err);
+                if (jokesList.length === 0) {
+                    jokesList = ['🌈 小七云段子：愿你的每一天都有欢笑，请按空行分隔格式创建 ydz.txt 文件。'];
+                    currentJoke = jokesList[0];
+                    isLoading = false;
+                    updateDisplayJoke();
+                }
+            });
+        }
+        
+        init();
     })();
 </script>
 </body>
