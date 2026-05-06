@@ -222,6 +222,30 @@
             100% { opacity: 0.2; }
         }
 
+        /* 资源统计文案 */
+        .stats-resource {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 0.85rem;
+            color: #cddafc;
+            background: rgba(0, 0, 0, 0.3);
+            display: inline-block;
+            width: auto;
+            backdrop-filter: blur(4px);
+            padding: 6px 20px;
+            border-radius: 60px;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(255, 220, 150, 0.25);
+            font-weight: 400;
+        }
+        
+        .stats-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
         /* 响应式 */
         @media (max-width: 550px) {
             .card {
@@ -244,6 +268,10 @@
             }
             .logo-icon {
                 font-size: 2rem;
+            }
+            .stats-resource {
+                font-size: 0.75rem;
+                padding: 4px 14px;
             }
         }
 
@@ -272,7 +300,8 @@
         /* 页脚导航链接样式 */
         .footer-nav {
             text-align: center;
-            margin-top: 32px;
+            margin-top: 28px;
+            margin-bottom: 10px;
             font-size: 0.85rem;
         }
         .footer-link {
@@ -323,9 +352,16 @@
         <button class="btn btn-secondary" id="refreshBtn">🔄 换一句</button>
     </div>
     
-    <!-- 页脚：小七导航，点击跳转 -->
+    <!-- 页脚：小七导航 + 资源数量统计 (新增) -->
     <div class="footer-nav">
         <a href="https://yanqi-spec.github.io/daohanglaile/" target="_blank" rel="noopener noreferrer" class="footer-link" id="navLink">✨ 小七导航 ✨</a>
+    </div>
+    
+    <!-- 新增统计展示区：显示当前储备段子数量 -->
+    <div class="stats-container" id="statsContainer">
+        <div class="stats-resource" id="statsText">
+            📚 小七正在努力加载资源...
+        </div>
     </div>
 </div>
 
@@ -341,6 +377,7 @@
         const copyBtn = document.getElementById('copyBtn');
         const refreshBtn = document.getElementById('refreshBtn');
         const toastEl = document.getElementById('toastMsg');
+        const statsTextEl = document.getElementById('statsText');
         
         // 状态管理
         let jokesList = [];          // 存储所有段子（每一段是由空行分隔的文本块）
@@ -361,6 +398,21 @@
                 toastEl.classList.remove('show');
                 if (!isError) toastEl.style.background = '#10b981e6';
             }, 2000);
+        }
+        
+        // 更新界面上的统计文字（展示 ydz.txt 有多少条资源）
+        function updateStatsDisplay() {
+            if (!statsTextEl) return;
+            const count = jokesList.length;
+            if (isLoading) {
+                statsTextEl.innerHTML = `☁️ 正在读取段子库……`;
+                return;
+            }
+            if (count === 0) {
+                statsTextEl.innerHTML = `📭 暂无有效段子 · 请按空行分隔添加内容`;
+            } else {
+                statsTextEl.innerHTML = `📚 目前小七已储备 ${count} 条资源，还在努力更新中~~ ✨`;
+            }
         }
         
         function updateDisplayJoke() {
@@ -473,6 +525,7 @@
                     currentParaLines.push(line);
                 }
             }
+            // 最后一段如果有内容
             if (currentParaLines.length > 0) {
                 let paraContent = currentParaLines.join('\n').trim();
                 if (paraContent !== "") {
@@ -490,10 +543,11 @@
             return paragraphs;
         }
         
-        // ---------- 核心：加载 ydz.txt 文件并按“空行分隔”解析段子 ----------
+        // 核心：加载 ydz.txt 文件并按“空行分隔”解析段子，同时更新统计和显示
         async function loadJokesFromTxt() {
             isLoading = true;
             updateDisplayJoke();
+            updateStatsDisplay();   // 显示加载中提示
             
             try {
                 const response = await fetch(TXT_PATH, {
@@ -508,10 +562,12 @@
                 const paragraphs = parseParagraphsByBlankLines(textContent);
                 
                 if (paragraphs.length === 0) {
+                    // 友好的体验提醒库
                     jokesList = [
                         '🎭 检测到 ydz.txt 没有用空行分隔的段子～\n\n✨ 正确示范：\n第一段内容\n可以有多行文字\n\n（中间有空行）\n第二段内容写在这里',
                         '📝 小贴士：每个段子之间需要有一个或多个空行隔开。\n\n比如这样写完一段后按两次回车再写下一段。',
-                        '☁️ 小七云段子期待你的精彩内容！\n\n快在 ydz.txt 里写入你的笑话吧。'
+                        '☁️ 小七云段子期待你的精彩内容！\n\n快在 ydz.txt 里写入你的笑话吧。',
+                        '💡 小七提醒：在 ydz.txt 中编写段子，不同段落之间用空行分隔，这样我就能识别啦✨'
                     ];
                     console.warn('ydz.txt 中没有通过空行分隔的有效段子，使用提示库');
                 } else {
@@ -526,19 +582,29 @@
                 
                 isLoading = false;
                 updateDisplayJoke();
+                updateStatsDisplay();    // 显示最终条数
                 console.log(`✨ 小七云段子已加载 ${jokesList.length} 条段子（空行分隔） ✨`);
             } catch (error) {
                 console.error('读取 ydz.txt 错误:', error);
+                // 如果网络或文件不存在，提供幽默提示 + 内嵌示例段子
                 jokesList = [
-                    '🍭 生活就像一盒巧克力，但你永远不知道下一颗是不是段子。\n\n（提示：ydz.txt 不存在或无法访问）',
-                    '🤣 为什么程序员总是分不清万圣节和圣诞节？\n因为 Oct 31 = Dec 25！\n\n✨ 请创建 ydz.txt 并用空行分隔每个段子。',
-                    '🐱 我有个段子，但是怕你笑到肚子疼～\n\n请在 root 目录创建 ydz.txt，段子之间记得留空行。',
+                    '🍭 生活就像一盒巧克力，但你永远不知道下一颗是不是段子。\n\n（提示：ydz.txt 不存在或无法访问）\n✨ 可以创建 ydz.txt 并用空行分隔段子~',
+                    '🤣 为什么程序员总是分不清万圣节和圣诞节？\n因为 Oct 31 = Dec 25！\n\n✨ 请创建 ydz.txt 并用空行分隔每个段子，小七就能读到更多欢乐。',
+                    '🐱 我有个段子，但是怕你笑到肚子疼～\n\n请在站点根目录创建 ydz.txt，段子之间记得留空行。例子：\n第一段笑料\n\n第二段精彩内容',
                     '🌟 小七云段子提醒：在同目录下创建 ydz.txt，多个段子之间用空行（回车空行）分隔。\n\n就像这样一段话结束换两行再写下一段。',
-                    '💡 听说爱笑的人运气都不会太差，换一句试试吧！'
+                    '💡 听说爱笑的人运气都不会太差，换一句试试吧！\n\n🎉 小七提示：放置好 ydz.txt 后刷新页面或双击底部区域即可热更新～'
                 ];
                 currentJoke = getRandomJokeFromList();
                 isLoading = false;
                 updateDisplayJoke();
+                updateStatsDisplay();    // 会显示0或以上（提示库有5条，也算资源）
+                // 如果是因为读取失败但是内嵌了 jokesList，我们让统计展示实际内嵌的条数，并告知用户
+                // 稍微优化 stats: 内嵌段子来自程序生成，显示为当前云端演示库数量
+                if (!jokesList.length && jokesList.length === 0) {
+                    // fallback again
+                } else {
+                    // 保证统计显示友好: 此时 jokesList 已有内置段子数量 
+                }
                 const footerNav = document.querySelector('.footer-nav');
                 if (footerNav) {
                     footerNav.style.opacity = '0.9';
@@ -546,6 +612,22 @@
                         if (footerNav) footerNav.style.opacity = '1';
                     }, 3000);
                 }
+                // 展示一条toast提示文件加载失败
+                showToast('⚠️ 未找到 ydz.txt，使用内置演示段子', true);
+            }
+        }
+        
+        // 重新加载段子库（用于手动刷新，双击等）
+        async function reloadJokesLibrary() {
+            isLoading = true;
+            updateDisplayJoke();
+            updateStatsDisplay();
+            showToast('🔄 正在重新加载段子库...', false);
+            await loadJokesFromTxt();
+            if (!isLoading && jokesList.length > 0) {
+                showToast(`✨ 加载完成！共 ${jokesList.length} 条段子待你宠幸`, false);
+            } else if (!isLoading && jokesList.length === 0) {
+                showToast(`📭 段子库仍然为空，请检查格式`, true);
             }
         }
         
@@ -573,50 +655,76 @@
                         e.preventDefault();
                         copyCurrentJoke();
                     }
+                } else if (e.key === 'r' || e.key === 'R') {
+                    // 按 R 键刷新整个段子库（方便更新）
+                    if (!e.ctrlKey && !e.metaKey) {
+                        e.preventDefault();
+                        reloadJokesLibrary();
+                    }
                 }
             });
         }
         
-        // 双击页脚导航区域重新加载（方便更新 ydz.txt 后刷新段子）
+        // 增加热更新功能：双击 .stats-container 或 .footer-nav 内区域（避开链接直接跳转）重新加载
         function setupReloadHack() {
-            const footerLink = document.getElementById('navLink');
-            // 注意：原本双击重新加载功能保留，但为了不干扰导航点击，在双击导航链接时也触发重载，但跳转仍会保留（单击正常跳转）
-            // 为了提供更新段子功能，我们可以让用户双击 .footer-nav 区域（不包括链接内部双击会有冲突，优化）
-            const footerContainer = document.querySelector('.footer-nav');
-            if (footerContainer) {
-                let clickTimer = null;
-                let doubleClickFlag = false;
-                footerContainer.addEventListener('click', (e) => {
-                    // 如果点击的是链接本身，不要干扰默认跳转行为，只记录双击时间？但链接会跳转。
-                    // 为保证双击重新加载不会误跳转，若双击发生在链接上阻止跳转？没有完美，但我们可以只监听非链接区域？简化：双击任何区域但跳转优先。
-                    // 更好的做法：额外增加一个隐藏手势，在 footer 容器上双击但不影响链接单击，但双击时如果点到链接会跳转。
-                    // 折中：保留原有加载方式，用户如果双击页面其他位置没法双击，我们在容器上强制做判断
-                    if (e.target.closest('a')) {
-                        // 点到链接时，双击也会触发跳转，但用户如果希望刷新段子可以双击其他留白区域，或者我们单独做 Toast 提示长按
-                        return;
+            // 双击统计容器触发重载（更直观）
+            const statsContainer = document.getElementById('statsContainer');
+            if (statsContainer) {
+                statsContainer.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    reloadJokesLibrary();
+                });
+                // 增加长按/移动端友好提示效果
+                let touchTimer = null;
+                statsContainer.addEventListener('touchstart', (e) => {
+                    if (e.target.closest('.stats-resource')) {
+                        touchTimer = setTimeout(() => {
+                            reloadJokesLibrary();
+                            showToast('🔁 正在热更新段子库', false);
+                            touchTimer = null;
+                        }, 500);
                     }
-                    if (clickTimer) {
-                        clearTimeout(clickTimer);
-                        clickTimer = null;
-                        doubleClickFlag = true;
-                        showToast('🔄 正在重新加载段子库...', false);
-                        loadJokesFromTxt().catch(err => console.warn('重载失败', err));
-                        setTimeout(() => { doubleClickFlag = false; }, 300);
+                });
+                statsContainer.addEventListener('touchend', () => {
+                    if (touchTimer) clearTimeout(touchTimer);
+                });
+            }
+            
+            // 同时在footer导航附近，但避免点击链接时误触发。我们单独允许 footer-nav 非链接双击
+            const footerNav = document.querySelector('.footer-nav');
+            if (footerNav) {
+                footerNav.addEventListener('dblclick', (e) => {
+                    if (e.target.closest('a')) {
+                        // 点到链接时仍然双击可能会跳转，但双击事件不太会触发跳转；但我们保持优雅，且不干扰用户体验，仍然允许热更新
+                        // 不过为了不干扰链接，可以仅空白区域双击，不过既然双击不跳转，触发重载也不错
+                        reloadJokesLibrary();
+                        e.preventDefault();
                     } else {
-                        clickTimer = setTimeout(() => {
-                            clickTimer = null;
-                        }, 200);
+                        reloadJokesLibrary();
                     }
                 });
             }
-            // 为了移动端长按友好提示
+            
+            // 为导航链接本身提供辅助刷新：如果长按导航链接图标区域长按3秒可重新加载（二次保障）
             const navLink = document.getElementById('navLink');
             if (navLink) {
+                let longPressTimer = null;
                 navLink.addEventListener('touchstart', (e) => {
-                    // nothing, 确保正常跳转
+                    longPressTimer = setTimeout(() => {
+                        reloadJokesLibrary();
+                        showToast('🔄 长按刷新段子库', false);
+                        longPressTimer = null;
+                    }, 800);
+                });
+                navLink.addEventListener('touchend', () => {
+                    if (longPressTimer) clearTimeout(longPressTimer);
+                });
+                navLink.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    reloadJokesLibrary();
+                    return false;
                 });
             }
-            // 同时为整个卡片提供一种隐藏手动刷新方式：三指? 简单起见，控制台可输出。
         }
         
         function init() {
@@ -629,6 +737,7 @@
                     currentJoke = jokesList[0];
                     isLoading = false;
                     updateDisplayJoke();
+                    updateStatsDisplay();
                 }
             });
         }
